@@ -33,7 +33,7 @@ public class App {
             }
         }
         System.out.println("Usuário com ID não encontrado.");
-    } 
+    }
 
     public void registrarPedido() {
         if (usuarioLogado == null) {
@@ -57,17 +57,27 @@ public class App {
             itensDoPedido.add(new ItemPedido(descricaoItem, valorUnitario, quantidade));
         }
 
+        double custoGlobalPedido = itensDoPedido.stream().mapToDouble(ItemPedido::getValorTotalItem).sum();
+        double tetoOrcamento = usuarioLogado.getDepartamento().getLimiteMaximoPedido();
+
+        if (custoGlobalPedido > tetoOrcamento) {
+            System.out.printf("Operação negada: O montante de R$ %.2f ultrapassa o teto do departamento (R$ %.2f).\n",
+                    custoGlobalPedido, tetoOrcamento);
+            return;
+        }
+
         Pedido pedidoCriado = new Pedido(proximoIdPedido, usuarioLogado, itensDoPedido);
         pedidos.add(pedidoCriado);
-        
+
         System.out.println("Pedido gerado com sucesso!");
         proximoIdPedido++;
     }
 
     public void avaliarPedido() {
-        if (!isUsuarioAdministrador()) return;
+        if (!isUsuarioAdministrador())
+            return;
         System.out.println("== Pedidos Abertos ou Pendentes ==");
-        
+
         boolean encontrou = false;
         for (Pedido pedido : pedidos) {
             if (pedido.getStatus() == StatusPedido.PENDENTE) {
@@ -86,13 +96,13 @@ public class App {
         entrada.nextLine();
 
         Pedido pedidoSelecionado = null;
-            for (Pedido pedido1: pedidos) {
-                if (pedido1.getId() == id) {
-                    pedidoSelecionado = pedido1;
-                    break;
-                }
+        for (Pedido pedido1 : pedidos) {
+            if (pedido1.getId() == id) {
+                pedidoSelecionado = pedido1;
+                break;
             }
-        
+        }
+
         if (pedidoSelecionado == null) {
             System.out.println("Pedido não encontrado.");
             return;
@@ -106,35 +116,34 @@ public class App {
         System.out.println("Detalhes do Pedido:" + pedidoSelecionado.getId());
         System.out.println("Pedido solicitado por: " + pedidoSelecionado.getSolicitante().getNome());
         System.out.println("Itens do Pedido:");
-            for (ItemPedido item : pedidoSelecionado.getItens()) {
-                System.out.println(item);
-
-            }
+        for (ItemPedido item : pedidoSelecionado.getItens()) {
+            System.out.println(item);
+        }
 
         System.out.println("Total do Pedido: R$ " + pedidoSelecionado.getValorTotalPedido());
 
         System.out.println("Escolha uma ação: ");
         System.out.println("[1] Aprovar Pedido");
         System.out.println("[2] Reprovar Pedido");
-        System.out.print("[3] Concluir Pedido");
-            int opcao = entrada.nextInt();
-            entrada.nextLine();
+        System.out.print("[3] Concluir Pedido: ");
+        int opcao = entrada.nextInt();
+        entrada.nextLine();
 
-                if (opcao == 1) {
-                    pedidoSelecionado.setStatus(StatusPedido.APROVADO);
-                    System.out.println("Pedido aprovado com sucesso.");
+        if (opcao == 1) {
+            pedidoSelecionado.setStatus(StatusPedido.APROVADO);
+            System.out.println("Pedido aprovado com sucesso.");
 
-                } else if (opcao == 2) {
-                    pedidoSelecionado.setStatus(StatusPedido.REPROVADO);
-                    System.out.println("Pedido reprovado com sucesso.");
+        } else if (opcao == 2) {
+            pedidoSelecionado.setStatus(StatusPedido.REPROVADO);
+            System.out.println("Pedido reprovado com sucesso.");
 
-                } else if (opcao == 3) {
-                    pedidoSelecionado.concluirPedido();
-                    System.out.println("Pedido concluído com sucesso.");
+        } else if (opcao == 3) {
+            pedidoSelecionado.concluirPedido();
+            System.out.println("Pedido concluído com sucesso.");
 
-                } else {
-                    System.out.println("Opção inválida.");
-                }
+        } else {
+            System.out.println("Opção inválida.");
+        }
     }
 
     private boolean isUsuarioAdministrador() {
@@ -159,12 +168,13 @@ public class App {
         System.out.println("[5] Buscar pedidos por periodo");
         System.out.println("[6] Buscar pedidos por funcionario");
         System.out.println("[7] Buscar pedidos por descrição do item");
+        System.out.println("[8] Exibir painel gerencial (Estatísticas)");
     }
 
     public void executar() {
         int opcao;
         do {
-            System.out.println("SISTEMA DE PEDIDOS");
+            System.out.println("\nSISTEMA DE PEDIDOS");
             menu();
             System.out.print("Digite a opcao desejada: ");
             opcao = entrada.nextInt();
@@ -193,14 +203,18 @@ public class App {
                 case 7:
                     buscarPedidosPorItem();
                     break;
+                case 8:
+                    exibirPainelGerencial();
+                    break;
                 default:
                     System.out.println("Opção inválida. Por favor, tente novamente.");
             }
         } while (opcao != 0);
-
     }
+
     public void buscarPedidoPorPeriodo() {
-        if (!isUsuarioAdministrador()) return;
+        if (!isUsuarioAdministrador())
+            return;
 
         System.out.print("Digite a data inicial (DD-MM-AAAA): ");
         LocalDate inicio = LocalDate.parse(entrada.nextLine(), DateTimeFormatter.ofPattern("dd-MM-yyyy"));
@@ -212,13 +226,13 @@ public class App {
         for (Pedido pedido : pedidos) {
             if (!pedido.getDataPedido().isBefore(inicio) && !pedido.getDataPedido().isAfter(fim)) {
                 System.out.println(pedido);
-
             }
         }
-    }   
+    }
 
     public void buscarPedidosPorFuncionario() {
-        if (!isUsuarioAdministrador()) return;
+        if (!isUsuarioAdministrador())
+            return;
 
         System.out.print("Digite o nome ou parte do nome do funcionário: ");
         String termo = entrada.nextLine().toLowerCase();
@@ -232,7 +246,8 @@ public class App {
     }
 
     public void buscarPedidosPorItem() {
-        if (!isUsuarioAdministrador()) return;
+        if (!isUsuarioAdministrador())
+            return;
 
         System.out.print("Digite o termo de busca para o item: ");
         String termo = entrada.nextLine().toLowerCase();
@@ -265,7 +280,7 @@ public class App {
                 if (pedido.getSolicitante().getId() == usuarioLogado.getId()) {
                     iterator.remove();
                     System.out.println("Pedido excluído com sucesso.");
-                    return; 
+                    return;
                 } else {
                     System.out.println("Apenas o funcionário que criou o pedido pode excluir.");
                     return;
@@ -282,6 +297,7 @@ public class App {
         }
         System.out.print(EstatisticasPedidos.gerarPainel(pedidos));
     }
+
     public List<Pedido> getPedidos() {
         return Collections.unmodifiableList(pedidos);
     }
